@@ -5,7 +5,7 @@ from cnn_inference import classify_cnn
 # =========================
 # CONFIG
 # =========================
-CAMERA_ID = 1
+CAMERA_ID = 0
 YOLO_CONF = 0.35
 CNN_CONF = 0.80
 IMG_SIZE = 640
