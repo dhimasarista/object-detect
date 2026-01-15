@@ -41,13 +41,8 @@ logs/
 # Datasets (never commit raw data)
 # =========================
 # data/
-<<<<<<< HEAD
 # dataset/
 # datasets/
-=======
-dataset/
-datasets/
->>>>>>> 27fef9e (923867832434)
 
 # =========================
 # PyTorch specific
