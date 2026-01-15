@@ -14,3 +14,5 @@ torch==2.9.1
 torchvision==0.24.1
 tqdm==4.67.1
 typing_extensions==4.15.0
+scikit-learn
+matplotlib
