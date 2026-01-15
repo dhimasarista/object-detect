@@ -1,20 +1,18 @@
 import cv2
 from ultralytics import YOLO
+from cnn_inference import classify_cnn
 
 # =========================
 # CONFIG
 # =========================
-CAMERA_ID = 0
-CONF_THRESH = 0.35
+CAMERA_ID = 1
+YOLO_CONF = 0.35
+CNN_CONF = 0.80
 IMG_SIZE = 640
 
-# COCO class IDs
-# 0 = person (muka kandidat)
-# 39 = bottle
-# 41 = cup
-# 44 = spoon
+# COCO classes
 VALID_CLASSES = {
-    0: "person",
+    0: "person",   # muka kandidat
     39: "bottle",
     41: "cup",
     44: "spoon"
@@ -23,27 +21,23 @@ VALID_CLASSES = {
 # =========================
 # LOAD YOLO
 # =========================
-model = YOLO("yolov8n.pt")
+yolo = YOLO("yolov8n.pt")
 
-# =========================
-# WEBCAM
-# =========================
 cap = cv2.VideoCapture(CAMERA_ID)
 if not cap.isOpened():
     raise RuntimeError("Camera tidak bisa dibuka")
 
-print("[INFO] YOLO webcam started. Press ESC to exit.")
+print("[INFO] YOLO + CNN webcam started. ESC to exit.")
 
 while True:
     ret, frame = cap.read()
     if not ret:
         continue
 
-    # YOLO inference
-    results = model(
+    results = yolo(
         frame,
         imgsz=IMG_SIZE,
-        conf=CONF_THRESH,
+        conf=YOLO_CONF,
         verbose=False
     )
 
@@ -54,15 +48,24 @@ while True:
                 continue
 
             x1, y1, x2, y2 = map(int, box.xyxy[0])
-            label = VALID_CLASSES[cls_id]
-            conf = box.conf[0].item()
 
-            # Filter ukuran box (hindari noise)
+            # Filter ukuran box
             w, h = x2 - x1, y2 - y1
             if w * h < 2000:
                 continue
 
-            color = (0, 255, 0) if cls_id != 0 else (0, 0, 255)
+            roi = frame[y1:y2, x1:x2]
+            if roi.size == 0:
+                continue
+
+            # =========================
+            # CNN CLASSIFICATION
+            # =========================
+            label, conf = classify_cnn(roi)
+            if conf < CNN_CONF:
+                continue
+
+            color = (0, 255, 0) if label != "muka" else (0, 0, 255)
 
             cv2.rectangle(frame, (x1, y1), (x2, y2), color, 2)
             cv2.putText(
@@ -75,8 +78,7 @@ while True:
                 2
             )
 
-    cv2.imshow("YOLO Webcam (Detector Only)", frame)
-
+    cv2.imshow("YOLO + CNN Detection", frame)
     if cv2.waitKey(1) & 0xFF == 27:
         break
 
